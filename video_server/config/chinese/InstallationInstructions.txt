@@ -1,0 +1,35 @@
+﻿Font Installation
+
+
+
+**************************************************************
+
+FOR MAC USERS:
+Double click your mouse on a font to open the font preview and then click the Install Font button to install for use with your applications. 
+
+
+
+**************************************************************
+
+
+
+FOR PC USERS:
+Use a font manager to preview and install the fonts.
+
+If you do not have a font manager, you can preview a font by double mouse clicking on it. To install a font simply select the font, right mouse click on the font and then choose the Install option from the right click menu. This will install the font into your Windows font folder and make it available to use in all your applications.
+
+You can also install groups of fonts by selecting multiple fonts, right click on a selected font, and then choose the Install option from the right click menu.
+
+**************************************************************
+
+Please note: Installing more than 500 fonts at once may slow down your computer. We recommend only installing the fonts you plan on using in your projects.
+
+
+Thank you,
+
+
+
+SummitType
+
+www.summitsoftcorp.com
+www.macwareinc.com
