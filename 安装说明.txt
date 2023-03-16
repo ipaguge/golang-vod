@@ -1,0 +1,17 @@
+
+
+系统版本:centos 7 目前没有测试其他系统只测试了centos7 建议使用centos7.6
+
+将video_server.zip上传到您的服务器  建议上传到您最大容量的分区
+
+解压后执行 sh run.sh  不需要安装额外的插件 如果你想使用域名访问自行使用nginx转发 
+
+
+使用过程中如果发现bug可以联系管理员处理
+
+gmail:bkguhfhg4@gmail.com
+tg:@yoyoyo2024
+
+
+
+
