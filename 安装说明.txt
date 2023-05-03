@@ -1,11 +1,22 @@
 
 
+
+演示地址http://154.13.6.130:8500/admin 账号root 密码123456
+不要上传大视频测试服务器性能有限 
+
+
+可以下载自行搭建测试 搭建系统目前只支持centos7 测试版会不定时杀进程 
+包地址:https://kk-game-hhdw.s3.ap-southeast-1.amazonaws.com/video_server.tar
+
 系统版本:centos 7 目前没有测试其他系统只测试了centos7 建议使用centos7.6
 
-下载地址:https://bafybeiazgiai5np3mhlsp3zm636kyuvmumaijfwzzjfe3fpgfeu2afea64.ipfs.dweb.link/video_server.zip
-将video_server.zip上传到您的服务器  建议上传到您最大容量的分区
+将video_server.tar 上传到您的服务器  建议上传到您最大容量的分区
 
-解压后执行 sh run.sh  不需要安装额外的插件 如果你想使用域名访问自行使用nginx转发 
+tar -cvf video_server.tar 
+cd video_server
+sh run.sh 
+
+不需要安装额外的插件 如果你想使用域名访问自行使用nginx转发 如果想安装宝塔控制面板 也不会受到影响不会有冲突 但是需要开放8200-8500的端口
 
 
 使用过程中如果发现bug可以联系管理员处理
