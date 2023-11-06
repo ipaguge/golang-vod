@@ -1,6 +1,8 @@
 # golang-vod 极兔转码系统 免费使用
 一套基于golang+vue+ffmpeg开发的视频云转码   支持离线下载 支持多分辨率 支持快速转码... 整体模仿的ppvod
 
+正式版本联系 tg:yoyoyo2024
+
 
 
 
