@@ -341,13 +341,12 @@ check_containers() {
     # 获取容器 ID
     CONTAINER_ID=$(docker-compose ps -q "$SERVICE")
 
-    # 如果服务没有配置健康检查，直接判断是否为运行状态
-    if [ -z "$(docker inspect --format='{{.State.Health}}' "$CONTAINER_ID" 2>/dev/null)" ]; then
+    # 检查容器是否有健康检查配置
+    if [ "$(docker inspect --format='{{.State.Health}}' "$CONTAINER_ID" 2>/dev/null)" == "<nil>" ]; then
+      # 没有配置健康检查，直接检查容器状态
       while true; do
-        # 获取容器的状态
         STATUS=$(docker inspect --format='{{.State.Status}}' "$CONTAINER_ID")
 
-        # 如果状态是 running，继续检查下一个容器
         if [ "$STATUS" == "running" ]; then
           break
         elif [ "$STATUS" == "exited" ]; then
@@ -456,7 +455,7 @@ run_server() {
 
 
   AuthorizedCode=$(get_config_value "AuthorizedCode")
-  if [[ "$GPU_STATUS" == "d79990da-f965-44e3-b120-0bbc7d349418" ]]; then
+  if [[ "$AuthorizedCode" == "d79990da-f965-44e3-b120-0bbc7d349418" ]]; then
      echo_content yellow "\n当前是使用状态 1小时后会自动停止\n如需要购买请联系telegram:yoyoCrafts"
   fi
 
