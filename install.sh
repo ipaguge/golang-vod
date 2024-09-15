@@ -1,7 +1,19 @@
 #!/bin/bash
 
+
+
+
 # 安装目录
-UNZIP_PATH="/home/video_vod"
+BASE_PATH="/home"
+if [[ "$(uname)" == "Darwin" ]]; then
+  # macOS 系统
+  BASE_PATH="/Users/xiaobai/Downloads"
+fi
+
+UNZIP_PATH="$BASE_PATH/video_vod"
+# ZIP 文件路径
+ZIP_PATH="$BASE_PATH/video_vod.zip"
+
 REMOTE_ZIP_URL="https://github.com/ipaguge/golang-vod/releases/download/2.1/video_vod.zip"
 
 echo_content() {
@@ -33,11 +45,6 @@ echo_content() {
 
 download_video_vod() {
 
-  # ZIP 文件路径
-  ZIP_PATH="/home/video_vod.zip"
-
-  # 解压路径
-  UNZIP_PATH="/home/video_vod"
 
   # 检查并安装 wget
   if ! command -v wget &>/dev/null; then
@@ -248,7 +255,9 @@ install_docker() {
     echo_content skyBlue "---> 你已经安装了Docker"
   fi
 
-  set_daemon
+  if [[ "$(uname)" != "Darwin" ]]; then
+    set_daemon
+  fi
 }
 
 install_status() {
@@ -303,7 +312,7 @@ install() {
   chmod +x auth
 
   # 读取 TOML 文件
-  tomlDir="$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd)"/config/config.toml
+  tomlDir="$UNZIP_PATH/config/config.toml"
   # 使用 grep 和 cut 提取所需的值
   address=$(sed -n '/\[server\]/,/\[/ {/Address\s*=/ {s/.*=\s*"\?\([^"]*\)"\?.*/\1/;p;q}}' $tomlDir)
   staticAddress=$(sed -n '/\[server\]/,/\[/ {/StaticAddress\s*=/ {s/.*=\s*"\?\([^"]*\)"\?.*/\1/;p;q}}' $tomlDir)
@@ -312,18 +321,12 @@ install() {
   adminPath=$(sed -n '/\[server\]/,/\[/ {/AdminPath\s*=/ {s/.*=\s*"\?\([^"]*\)"\?.*/\1/;p;q}}' $tomlDir)
 
   $isSudo ln -sf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
-  set_daemon
+
 
   check_and_pull_image "neikuwaichuan/xiaobai_ffmpeg_nvidia:2.0"
   check_and_pull_image "mysql:8.0"
   check_and_pull_image "redis:latest"
-
-  get_gpu_status
-  if [[ $? -eq 0 ]]; then
-    docker_compose_for_gpu true
-  else
-    docker_compose_for_gpu false
-  fi
+  set_config_value "gpu" "false"
 }
 
 check_containers() {
@@ -375,15 +378,26 @@ check_containers() {
 
 get_config_value() {
   key=$1
-  CONFIG_FILE="config/config.toml"
-  # 使用 grep 提取 gpu 这一行，并使用 awk 提取 gpu 的值
-  GPU_VALUE=$(grep "^$key" "$CONFIG_FILE" | awk -F' = ' '{print $2}' | tr -d '"')
-  return "$GPU_VALUE"
+
+  CONFIG_FILE="$UNZIP_PATH/config/config.toml"
+
+  value=$(grep "^$key" "$CONFIG_FILE" | awk -F' = ' '{print $2}' | tr -d '"')
+
+  echo "$value"
 }
 
+set_config_value() {
+  key=$1
+  new_value=$2
+  CONFIG_FILE="$UNZIP_PATH/config/config.toml"
+  shell="sed -i.bak 's/^$key = .*/$key = \"$new_value\"/' \"$CONFIG_FILE\""
+#  echo_content blue "$shell"
+  eval "$shell"
+}
+
+
 get_gpu_status(){
-  get_config_value "gpu"
-  GPU_VALUE=$?
+ GPU_VALUE=$(get_config_value "gpu")
   # 返回 GPU 配置的值
   if [[ "$GPU_VALUE" == "true" ]]; then
     return 0  # 表示 GPU 已开启
@@ -395,71 +409,7 @@ get_gpu_status(){
   fi
 }
 
-docker_compose_for_gpu() {
-  local enable_gpu=$1  # 从函数参数传入是否启用 GPU（true/false）
-  local DOCKER_COMPOSE_FILE="docker-compose.yml"
 
-  # 确保在正确的目录中执行
-  cd "$UNZIP_PATH" || {  echo_content red "无法进入目录 $UNZIP_PATH，退出脚本。"; exit 1; }
-
-  if [[ "$enable_gpu" == "true" ]]; then
-    # 检查 NVIDIA 驱动是否安装
-    if ! command -v nvidia-smi &>/dev/null; then
-      echo_content red "NVIDIA 驱动未安装，无法启用 GPU 支持，请先安装驱动。"
-      exit 1
-    else
-      # 备份原始 docker-compose.yml 文件
-      cp "$DOCKER_COMPOSE_FILE" "${DOCKER_COMPOSE_FILE}.bak"
-
-      # 启用 GPU：取消 runtime 和 environment 部分的注释
-      sed -i '/runtime: nvidia/s/^# *//' "$DOCKER_COMPOSE_FILE"
-      sed -i '/environment:/s/^# *//' "$DOCKER_COMPOSE_FILE"
-      sed -i '/- NVIDIA_VISIBLE_DEVICES=all/s/^# *//' "$DOCKER_COMPOSE_FILE"
-    fi
-  elif [[ "$enable_gpu" == "false" ]]; then
-    cp "$DOCKER_COMPOSE_FILE" "${DOCKER_COMPOSE_FILE}.bak"
-
-    # 禁用 GPU：将 runtime 和 environment 部分重新注释
-    sed -i '/runtime: nvidia/s/^/    #/' "$DOCKER_COMPOSE_FILE"
-    sed -i '/environment:/s/^/    #/' "$DOCKER_COMPOSE_FILE"
-    sed -i '/- NVIDIA_VISIBLE_DEVICES=all/s/^/      #/' "$DOCKER_COMPOSE_FILE"
-  else
-    echo_content red "无效的参数，请传入 'true' 或 'false'。"
-    exit 1
-  fi
-}
-
-set_gpu_config() {
-  CONFIG_FILE="config/config.toml"
-  GPU_STATUS=$1
-
-  # 使用 sed 修改 config.toml 中的 gpu 选项
-  if grep -q '^gpu' "$CONFIG_FILE"; then
-    # 如果文件中已经存在 gpu 选项，修改它
-    sed -i "s/^gpu = .*/gpu = $GPU_STATUS/" "$CONFIG_FILE"
-  fi
-}
-
-set_gpu(){
-  GPU_STATUS=$1
-  # 检查参数是否为 "true" 或 "false"
-  if [[ "$GPU_STATUS" != "true" && "$GPU_STATUS" != "false" ]]; then
-    echo_content red "无效的参数，必须是 'true' 或 'false'。"
-    exit 1
-  fi
-  docker_compose_for_gpu  GPU_STATUS
-  set_gpu_config GPU_STATUS
-  run_server
-}
-
-set_authorizedCode_config() {
-  CONFIG_FILE="config/config.toml"
-  AuthorizedCode=$1
-
-  if grep -q '^AuthorizedCode' "$CONFIG_FILE"; then
-    sed -i "s/^AuthorizedCode = .*/AuthorizedCode = $AuthorizedCode/" "$CONFIG_FILE"
-  fi
-}
 
 run_server() {
   if ! docker-compose ps | grep "xiaobai_ffmpeg"; then
@@ -485,9 +435,8 @@ run_server() {
     echo_content skyBlue "\n欢迎使用极兔转码系统\n如果遇到问题请联系管理员 telegram:yoyoCrafts \n\n后台地址 http://ip$address/$adminPath    账号 root  密码 123456 如果无法访问请等待30秒左右在次访问试试\n"
   fi
 
-  get_config_value "AuthorizedCode"
-  AuthorizedCode=$?
 
+  AuthorizedCode=$(get_config_value "AuthorizedCode")
   if [[ "$GPU_STATUS" == "d79990da-f965-44e3-b120-0bbc7d349418" ]]; then
      echo_content yellow "\n当前是使用状态 1小时后会自动停止\n如需要购买请联系telegram:yoyoCrafts"
   fi
@@ -502,11 +451,15 @@ validate_authorizedCode() {
 
   # 正则表达式匹配 UUID 格式 (例如：8-4-4-4-12 的字符组合)
   if [[ "$input" =~ ^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$ ]]; then
-    if ./auth | grep -q "授权有效"; then
-         return 0
+    if [[ "$(uname)" != "Darwin" ]]; then
+       if ./auth | grep -q "授权有效"; then
+           return 0
+       else
+          echo_content red "$(./auth)"
+          return 1
+       fi
     else
-        echo_content red "$(./auth)"
-        return 1
+      return 0
     fi
   else
     echo_content red "输入的不是有效的 授权码，请重新输入。"
@@ -515,52 +468,39 @@ validate_authorizedCode() {
 }
 
 run() {
-  cd UNZIP_PATH
+  echo_content blue "....."
   install_status
   if [ $? -eq 1 ]; then
     install
   fi
+  cd "$UNZIP_PATH"
+  ls
 
-  if ./auth | grep -q "授权有效"; then
-    echo_content skyBlue "授权有效"
-  else
-    echo_content red "$(./auth)"
-    exit 1
+  if [[ "$(uname)" != "Darwin" ]]; then
+    if ./auth | grep -q "授权有效"; then
+        echo_content skyBlue "授权有效"
+    else
+        echo_content red "$(./auth)"
+        exit 1
+    fi
   fi
 
-  gpuStatus="开启GPU转码"
-  get_gpu_status
-  if [[ $? -eq 0 ]]; then
-    gpuStatus="关闭GPU转码"
-  else
-    gpuStatus="开启GPU转码"
-  fi
 
   echo_content blue "\n\n\n\n\n欢迎使用极兔转码系统\n如果遇到问题请联系管理员 telegram:yoyoyo2024 \n\n"
   PS3='请选择一个选项: '
-  options=("卸载转码程序" "重启转码程序" "$gpuStatus" "重新安装转码程序" "变更授权码" "退出")
+  options=("启动/重启" "停止" "重新安装" "变更授权码" "卸载" "退出")
 
   select opt in "${options[@]}"; do # 使用 select 关键字而不是直接使用变量
     case $opt in
-    "卸载转码程序")
-      docker-compose down
-      break
-      ;;
-    "重启转码程序")
+    "启动/重启")
       run_server
       break
       ;;
-    "开启GPU转码")
-        # 检查参数是否为 "true" 或 "false"
-        if [[ "$gpuStatus" != "开启GPU转码" ]]; then
-          set_gpu true
-        else
-          set_gpu false
-        fi
-
+    "停止")
+      docker-compose stop
       break
       ;;
-    "重新安装转码程序")
+    "重新安装")
       docker-compose down
       run_server
       break
@@ -568,16 +508,21 @@ run() {
     "变更授权码")
       while true; do
         read -p "请输入授权码: " user_input
-        input=$(echo "$user_input" | xargs)
-        validate_authorizedCode "$user_input"
+        input=$(echo "$user_input" | xargs)  # 清除多余的空格
+        validate_authorizedCode "$user_input"  # 假设此函数验证授权码
         if [ $? -eq 0 ]; then
+          set_config_value "AuthorizedCode" "$input"
           break
         fi
-        set_authorizedCode_config  input
       done
       run_server
       break
       ;;
+    "卸载")
+       docker-compose down
+       run_server
+       break
+       ;;
     "退出")
       break
       ;;
@@ -588,5 +533,5 @@ run() {
   done
 }
 
-
+run
 
