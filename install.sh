@@ -326,8 +326,8 @@ install() {
   check_and_pull_image "neikuwaichuan/xiaobai_ffmpeg_nvidia:2.0"
   check_and_pull_image "mysql:8.0"
   check_and_pull_image "redis:latest"
-  set_config_value "gpu" "false"
-  set_config_value "AuthorizedCode" "d79990da-f965-44e3-b120-0bbc7d349418"
+  set_sting_value "AuthorizedCode" "d79990da-f965-44e3-b120-0bbc7d349410"
+  set_bool_value "gpu" false
 }
 
 check_containers() {
@@ -387,12 +387,21 @@ get_config_value() {
   echo "$value"
 }
 
-set_config_value() {
+set_sting_value() {
   key=$1
   new_value=$2
   CONFIG_FILE="$UNZIP_PATH/config/config.toml"
   shell="sed -i.bak 's/^$key = .*/$key = \"$new_value\"/' \"$CONFIG_FILE\""
-#  echo_content blue "$shell"
+  echo_content blue "$shell"
+  eval "$shell"
+}
+
+set_bool_value() {
+  key=$1
+  new_value=$2
+  CONFIG_FILE="$UNZIP_PATH/config/config.toml"
+  shell="sed -i.bak 's/^$key = .*/$key = $new_value/' \"$CONFIG_FILE\""
+  echo_content blue "$shell"
   eval "$shell"
 }
 
@@ -484,10 +493,6 @@ run() {
     install
   fi
   cd "$UNZIP_PATH"
-  ls
-
-
-
 
   echo_content blue "\n\n\n\n\n欢迎使用极兔转码系统\n如果遇到问题请联系管理员 telegram:yoyoyo2024 \n\n"
   PS3='请选择一个选项: '
@@ -514,7 +519,7 @@ run() {
         input=$(echo "$user_input" | xargs)  # 清除多余的空格
         validate_authorizedCode "$user_input"  # 假设此函数验证授权码
         if [ $? -eq 0 ]; then
-          set_config_value "AuthorizedCode" "$input"
+          set_sting_value "AuthorizedCode" "$input"
           break
         fi
       done
