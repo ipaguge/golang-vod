@@ -292,6 +292,17 @@ check_and_pull_image() {
 }
 
 install() {
+    # 读取 TOML 文件
+    tomlDir="$UNZIP_PATH/config/config.toml"
+    # 使用 grep 和 cut 提取所需的值
+    address=$(get_config_value "Address")
+    staticAddress=$(get_config_value "StaticAddress")
+    fileAddress=$(get_config_value "FileAddress")
+    uploaderAddress=$(get_config_value "UploaderAddress")
+    adminPath=$(get_config_value "AdminPath")
+
+
+
   if [[ ! $(docker -v 2>/dev/null) ]]; then
     install_docker
     $isSudo iptables -A INPUT -p tcp --dport $address -j ACCEPT
@@ -311,14 +322,6 @@ install() {
   chmod +x video_server
   chmod +x auth
 
-  # 读取 TOML 文件
-  tomlDir="$UNZIP_PATH/config/config.toml"
-  # 使用 grep 和 cut 提取所需的值
-  address=$(sed -n '/\[server\]/,/\[/ {/Address\s*=/ {s/.*=\s*"\?\([^"]*\)"\?.*/\1/;p;q}}' $tomlDir)
-  staticAddress=$(sed -n '/\[server\]/,/\[/ {/StaticAddress\s*=/ {s/.*=\s*"\?\([^"]*\)"\?.*/\1/;p;q}}' $tomlDir)
-  fileAddress=$(sed -n '/\[server\]/,/\[/ {/FileAddress\s*=/ {s/.*=\s*"\?\([^"]*\)"\?.*/\1/;p;q}}' $tomlDir)
-  uploaderAddress=$(sed -n '/\[server\]/,/\[/ {/UploaderAddress\s*=/ {s/.*=\s*"\?\([^"]*\)"\?.*/\1/;p;q}}' $tomlDir)
-  adminPath=$(sed -n '/\[server\]/,/\[/ {/AdminPath\s*=/ {s/.*=\s*"\?\([^"]*\)"\?.*/\1/;p;q}}' $tomlDir)
 
   $isSudo ln -sf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
 
@@ -326,7 +329,7 @@ install() {
   check_and_pull_image "neikuwaichuan/xiaobai_ffmpeg_nvidia:2.0"
   check_and_pull_image "mysql:8.0"
   check_and_pull_image "redis:latest"
-  set_sting_value "AuthorizedCode" "d79990da-f965-44e3-b120-0bbc7d349410"
+  set_sting_value "AuthorizedCode" "d79990da-f965-44e3-b120-0bbc7d349418"
   set_bool_value "gpu" false
 }
 
@@ -379,12 +382,16 @@ check_containers() {
 get_config_value() {
   key=$1
 
-  CONFIG_FILE="$UNZIP_PATH/config/config.toml"
+  # 构建 shell 命令
+  shell="grep \"$key\" $UNZIP_PATH/config/config.toml | awk -F' = ' '{print \$2}' | tr -d '\"'"
 
-  value=$(grep "^$key" "$CONFIG_FILE" | awk -F' = ' '{print $2}' | tr -d '"')
+  # 使用 eval 执行并捕获输出
+  result=$(eval "$shell")
 
-  echo "$value"
+  # 输出结果
+  echo "$result"
 }
+
 
 set_sting_value() {
   key=$1
@@ -456,7 +463,7 @@ run_server() {
 
   AuthorizedCode=$(get_config_value "AuthorizedCode")
   if [[ "$AuthorizedCode" == "d79990da-f965-44e3-b120-0bbc7d349418" ]]; then
-     echo_content yellow "\n当前是使用状态 1小时后会自动停止\n如需要购买请联系telegram:yoyoCrafts"
+     echo_content yellow "\n注意当前是试用状态 1小时后会自动停止\n如需要购买请联系telegram:yoyoCrafts\n\n"
   fi
 
 
