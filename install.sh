@@ -292,23 +292,8 @@ check_and_pull_image() {
 }
 
 install() {
-    # 读取 TOML 文件
-    tomlDir="$UNZIP_PATH/config/config.toml"
-    # 使用 grep 和 cut 提取所需的值
-    address=$(get_config_value "Address")
-    staticAddress=$(get_config_value "StaticAddress")
-    fileAddress=$(get_config_value "FileAddress")
-    uploaderAddress=$(get_config_value "UploaderAddress")
-    adminPath=$(get_config_value "AdminPath")
-
-
-
   if [[ ! $(docker -v 2>/dev/null) ]]; then
     install_docker
-    $isSudo iptables -A INPUT -p tcp --dport $address -j ACCEPT
-    $isSudo iptables -A INPUT -p tcp --dport $staticAddress -j ACCEPT
-    $isSudo iptables -A INPUT -p tcp --dport $fileAddress -j ACCEPT
-    $isSudo iptables -A INPUT -p tcp --dport $uploaderAddress -j ACCEPT
   fi
 
   # 检查并安装 docker-compose
@@ -383,7 +368,7 @@ get_config_value() {
   key=$1
 
   # 构建 shell 命令
-  shell="grep \"$key\" $UNZIP_PATH/config/config.toml | awk -F' = ' '{print \$2}' | tr -d '\"'"
+  shell="grep -i \"^[[:space:]]*$key\" $UNZIP_PATH/config/config.toml | awk -F' = ' '{print \$2}' | tr -d '\"'"
 
   # 使用 eval 执行并捕获输出
   result=$(eval "$shell")
@@ -453,6 +438,17 @@ run_server() {
     fi
   fi
   check_containers
+
+  # 使用 grep 和 cut 提取所需的值
+  address=$(get_config_value "Address")
+  staticAddress=$(get_config_value "StaticAddress")
+  fileAddress=$(get_config_value "FileAddress")
+  uploaderAddress=$(get_config_value "UploaderAddress")
+  adminPath=$(get_config_value "AdminPath")
+  $isSudo iptables -A INPUT -p tcp --dport "$address" -j ACCEPT
+  $isSudo iptables -A INPUT -p tcp --dport "$staticAddress" -j ACCEPT
+  $isSudo iptables -A INPUT -p tcp --dport "$fileAddress" -j ACCEPT
+  $isSudo iptables -A INPUT -p tcp --dport "$uploaderAddress" -j ACCEPT
 
   if ! docker-compose ps | grep "xiaobai_ffmpeg"; then
     echo_content red "\n服务未运行 启动或者安装失败\n请联系管理员 telegram:yoyoCrafts"
