@@ -14,7 +14,7 @@ UNZIP_PATH="$BASE_PATH/video_vod"
 # ZIP 文件路径
 ZIP_PATH="$BASE_PATH/video_vod.zip"
 
-REMOTE_ZIP_URL="https://github.com/ipaguge/golang-vod/releases/download/2.1/video_vod.zip"
+REMOTE_ZIP_URL="https://github.com/ipaguge/golang-vod/releases/download/2.1/video_vod.zip?2.1"
 
 echo_content() {
   ECHO_TYPE="echo -e"
