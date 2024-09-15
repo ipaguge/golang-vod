@@ -3,7 +3,7 @@
 
 系统版本:centos 7 目前没有测试其他系统只测试了centos7 建议使用centos7.6
 
-安装命令:curl -s https://raw.githubusercontent.com/ipaguge/golang-vod/main/install.sh | bash
+安装命令: bash <(curl -s https://raw.githubusercontent.com/ipaguge/golang-vod/main/install.sh)
 
 不需要安装额外的插件 如果你想使用域名访问自行使用nginx转发 如果想安装宝塔控制面板 也不会受到影响不会有冲突 但是需要开放8200-8500的端口
 
