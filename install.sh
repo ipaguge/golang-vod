@@ -14,7 +14,7 @@ UNZIP_PATH="$BASE_PATH/video_vod"
 # ZIP 文件路径
 ZIP_PATH="$BASE_PATH/video_vod.zip"
 
-REMOTE_ZIP_URL="https://github.com/ipaguge/golang-vod/releases/download/2.1/video_vod.zip?2.1"
+REMOTE_ZIP_URL="https://github.com/ipaguge/golang-vod/releases/download/2.1/video_vod.zip"
 
 echo_content() {
   ECHO_TYPE="echo -e"
@@ -327,6 +327,7 @@ install() {
   check_and_pull_image "mysql:8.0"
   check_and_pull_image "redis:latest"
   set_config_value "gpu" "false"
+  set_config_value "AuthorizedCode" "d79990da-f965-44e3-b120-0bbc7d349418"
 }
 
 check_containers() {
@@ -412,6 +413,15 @@ get_gpu_status(){
 
 
 run_server() {
+  if [[ "$(uname)" != "Darwin" ]]; then
+     if ./auth | grep -q "授权有效"; then
+        echo_content skyBlue "授权有效"
+    else
+        echo_content red "$(./auth)"
+        exit 1
+    fi
+  fi
+
   if ! docker-compose ps | grep "xiaobai_ffmpeg"; then
     echo_content skyBlue "\n服务未运行，开始启动服务\n"
     docker-compose up -d
@@ -476,14 +486,7 @@ run() {
   cd "$UNZIP_PATH"
   ls
 
-  if [[ "$(uname)" != "Darwin" ]]; then
-    if ./auth | grep -q "授权有效"; then
-        echo_content skyBlue "授权有效"
-    else
-        echo_content red "$(./auth)"
-        exit 1
-    fi
-  fi
+
 
 
   echo_content blue "\n\n\n\n\n欢迎使用极兔转码系统\n如果遇到问题请联系管理员 telegram:yoyoyo2024 \n\n"
