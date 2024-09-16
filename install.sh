@@ -382,7 +382,7 @@ set_sting_value() {
   key=$1
   new_value=$2
   CONFIG_FILE="$UNZIP_PATH/config/config.toml"
-  shell="sed -i.bak 's/^$key = .*/$key = \"$new_value\"/' \"$CONFIG_FILE\""
+  shell="sed -i.bak 's/^\s*$key = .*/$key = \"$new_value\"/' \"$CONFIG_FILE\""
   echo_content blue "$shell"
   eval "$shell"
 }
@@ -391,7 +391,7 @@ set_bool_value() {
   key=$1
   new_value=$2
   CONFIG_FILE="$UNZIP_PATH/config/config.toml"
-  shell="sed -i.bak 's/^$key = .*/$key = $new_value/' \"$CONFIG_FILE\""
+  shell="sed -i.bak 's/^\s*$key = .*/$key = $new_value/' \"$CONFIG_FILE\""
   echo_content blue "$shell"
   eval "$shell"
 }
@@ -496,7 +496,7 @@ run() {
   fi
   cd "$UNZIP_PATH"
 
-  echo_content blue "\n\n\n\n\n欢迎使用极兔转码系统\n如果遇到问题请联系管理员 telegram:yoyoyo2024 \n\n"
+  echo_content blue "\n\n\n\n\n欢迎使用极兔转码系统\n如果遇到问题请联系管理员 telegram:yoyoCrafts \n\n"
   PS3='请选择一个选项: '
   options=("启动/重启" "停止" "重新安装" "变更授权码" "卸载" "退出")
 
