@@ -410,16 +410,28 @@ get_gpu_status(){
   fi
 }
 
+auth_status(){
+  if [[ "$(uname)" != "Darwin" ]]; then
+      # 将 ./auth 的输出存储在一个变量中
+      auth_output=$(./auth)
+
+      if echo "$auth_output" | grep -q "授权有效"; then
+          echo_content skyBlue "授权有效"
+          return 0  # 授权有效，返回 0
+      else
+          echo_content red "$auth_output"
+          return 1  # 授权无效，返回 1
+      fi
+  fi
+}
+
 
 
 run_server() {
-  if [[ "$(uname)" != "Darwin" ]]; then
-     if ./auth | grep -q "授权有效"; then
-        echo_content skyBlue "授权有效"
-    else
-        echo_content red "$(./auth)"
-        exit 1
-    fi
+
+  auth_status
+  if [[ $? -ne 0 ]]; then
+      exit 1
   fi
 
   if ! docker-compose ps | grep "xiaobai_ffmpeg"; then
@@ -473,11 +485,14 @@ validate_authorizedCode() {
   # 正则表达式匹配 UUID 格式 (例如：8-4-4-4-12 的字符组合)
   if [[ "$input" =~ ^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$ ]]; then
     if [[ "$(uname)" != "Darwin" ]]; then
-       if ./auth | grep -q "授权有效"; then
-           return 0
+       oldAuthorizedCode=$(get_config_value "AuthorizedCode")
+       set_sting_value "AuthorizedCode" "$input"
+       auth_status
+       if [[ $? -ne 0 ]]; then
+           set_sting_value "AuthorizedCode" "$oldAuthorizedCode"
+           return 1
        else
-          echo_content red "$(./auth)"
-          return 1
+           return 0
        fi
     else
       return 0
@@ -521,7 +536,6 @@ run() {
         input=$(echo "$user_input" | xargs)  # 清除多余的空格
         validate_authorizedCode "$user_input"  # 假设此函数验证授权码
         if [ $? -eq 0 ]; then
-          set_sting_value "AuthorizedCode" "$input"
           break
         fi
       done
