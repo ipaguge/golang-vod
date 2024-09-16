@@ -1,7 +1,7 @@
 
 可以下载自行搭建测试 搭建系统目前只支持centos7 测试版会不定时杀进程 
 
-系统版本:centos 7 目前没有测试其他系统只测试了centos7 建议使用centos7.6
+系统版本:centos ubuntu
 
 安装命令: bash <(curl -s https://raw.githubusercontent.com/ipaguge/golang-vod/main/install.sh)
 
