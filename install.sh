@@ -450,7 +450,8 @@ run_server() {
     fi
   fi
   check_containers
-
+  
+  sleep 20
   # 使用 grep 和 cut 提取所需的值
   address=$(get_config_value "Address")
   staticAddress=$(get_config_value "StaticAddress")
